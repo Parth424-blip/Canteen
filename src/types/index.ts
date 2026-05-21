@@ -3,7 +3,7 @@ export interface Entry {
   user_id: string;
   amount: number;
   label: string;
-  vibe_tag: string;
+  vibe_tag?: "Necessary" | "Impulse" | "Investment" | "Experience";
   note?: string;
   created_at: string;
 }

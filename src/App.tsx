@@ -4,35 +4,68 @@ import LogEntry from "./pages/LogEntry";
 import History from "./pages/History";
 import Insights from "./pages/Insights";
 import Auth from "./pages/Auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
-import { useEffect } from "react";
 import { supabase } from "./lib/supabase";
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
     });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  function ProtectedRoute({ children }) {
-    if (!isAuthenticated) {
-      return <Navigate to="/auth" />
-    }
-    return children
-  }
+  if (isAuthenticated === null) return <div>Loading...</div>;
+  if (!isAuthenticated) return <Navigate to="/auth" />;
+  return <>{children}</>;
+}
+
+function App() {
   return (
     <Routes>
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/log" element={<ProtectedRoute><LogEntry /></ProtectedRoute>} />
-      <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-      <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
+      <Route path="/auth" element={<Auth />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/log"
+        element={
+          <ProtectedRoute>
+            <LogEntry />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <History />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/insights"
+        element={
+          <ProtectedRoute>
+            <Insights />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
