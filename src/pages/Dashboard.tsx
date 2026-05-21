@@ -17,6 +17,14 @@ function Dashboard() {
         else setEntries(data as Entry[]);
       });
   }, []);
+  function getPersonality(tag: string) {
+    if (tag === "Impulse") return "You're an Impulse Spender 🔥";
+    if (tag === "Investment") return "You're a Strategic Investor 📈";
+    if (tag === "Experience") return "You're an Experience Seeker 🌍";
+    if (tag === "Necessary") return "You're a Mindful Spender 🧘";
+    return "Start logging to discover your personality";
+  }
+
   const todayAmount = entries.reduce((acc, entry) => {
     if (
       entry.created_at.split("T")[0] === new Date().toISOString().split("T")[0]
@@ -36,6 +44,19 @@ function Dashboard() {
   }, 0);
 
   const recentEntries = entries.slice(-5);
+  const vibeTagCounter = entries.reduce((vibeTagCounter, entry) => {
+    if (entry.vibe_tag) {
+      if (vibeTagCounter[entry.vibe_tag]) {
+        vibeTagCounter[entry.vibe_tag] += 1;
+      } else {
+        vibeTagCounter[entry.vibe_tag] = 1;
+      }
+    }
+    return vibeTagCounter;
+  }, {});
+  const highestVibeTag = Object.keys(vibeTagCounter).reduce((a, b) =>
+    vibeTagCounter[a] > vibeTagCounter[b] ? a : b,
+  );
 
   return (
     <>
@@ -52,6 +73,7 @@ function Dashboard() {
         </div>
       ))}
       <button onClick={() => navigate("/log")}>Add Entry</button>
+      <p>{getPersonality(highestVibeTag)}</p>
     </>
   );
 }
