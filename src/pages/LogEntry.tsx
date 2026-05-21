@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +10,7 @@ function LogEntry() {
   const [amount, setAmount] = useState<number>(0);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
@@ -29,41 +30,101 @@ function LogEntry() {
   };
 
   return (
-    <>
-      <h1>Log Entry</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="number"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
-        />
-        <input
-          type="text"
-          placeholder="Label"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-        />
-        <button type="button" onClick={() => setVibeTag("Necessary")}>
-          Necessary
-        </button>
-        <button type="button" onClick={() => setVibeTag("Impulse")}>
-          Impulse
-        </button>
-        <button type="button" onClick={() => setVibeTag("Investment")}>
-          Investment
-        </button>
-        <button type="button" onClick={() => setVibeTag("Experience")}>
-          Experience
-        </button>
-        <textarea
-          placeholder="Note"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-        <button type="submit">Submit</button>
-      </form>
-    </>
+    <div className="max-w-xl mx-auto">
+      <div className="bg-[#121212]/40 border border-neutral-900 backdrop-blur-md p-8 rounded-2xl shadow-xl space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            <span>📝</span> Log Entry
+          </h1>
+          <p className="text-sm text-neutral-400 mt-1">Record your spending details below</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            {/* Amount Input */}
+            <div>
+              <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
+                Amount ($)
+              </label>
+              <input
+                type="number"
+                step="any"
+                required
+                placeholder="0.00"
+                value={amount || ""}
+                onChange={(e) => setAmount(Number(e.target.value))}
+                className="appearance-none block w-full px-4 py-3 border border-neutral-800 placeholder-neutral-600 text-white rounded-xl bg-neutral-950/80 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 sm:text-sm transition-all duration-200"
+              />
+            </div>
+
+            {/* Label Input */}
+            <div>
+              <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
+                Label / Expense Name
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Canteen lunch, groceries, etc."
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                className="appearance-none block w-full px-4 py-3 border border-neutral-800 placeholder-neutral-600 text-white rounded-xl bg-neutral-950/80 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 sm:text-sm transition-all duration-200"
+              />
+            </div>
+
+            {/* Vibe Tags selectable chips */}
+            <div>
+              <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
+                Vibe / Category
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {[
+                  { tag: "Necessary", active: "bg-blue-500/10 border-blue-500/50 text-blue-400 shadow-blue-500/5", inactive: "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-blue-400 hover:bg-blue-500/5" },
+                  { tag: "Impulse", active: "bg-rose-500/10 border-rose-500/50 text-rose-400 shadow-rose-500/5", inactive: "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-rose-400 hover:bg-rose-500/5" },
+                  { tag: "Investment", active: "bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-emerald-500/5", inactive: "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-emerald-400 hover:bg-emerald-500/5" },
+                  { tag: "Experience", active: "bg-purple-500/10 border-purple-500/50 text-purple-400 shadow-purple-500/5", inactive: "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-purple-400 hover:bg-purple-500/5" },
+                ].map((item) => {
+                  const isSelected = vibeTag === item.tag;
+                  return (
+                    <button
+                      key={item.tag}
+                      type="button"
+                      onClick={() => setVibeTag(item.tag)}
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                        isSelected ? item.active : item.inactive
+                      }`}
+                    >
+                      {item.tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Note text area */}
+            <div>
+              <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
+                Additional Notes (Optional)
+              </label>
+              <textarea
+                placeholder="Write a brief note..."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                className="appearance-none block w-full px-4 py-3 border border-neutral-800 placeholder-neutral-600 text-white rounded-xl bg-neutral-950/80 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 sm:text-sm transition-all duration-200 resize-none"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3.5 rounded-xl font-semibold text-black bg-amber-500 hover:bg-amber-400 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/25 transition-all duration-200 cursor-pointer text-center text-sm"
+          >
+            Submit Entry
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 
