@@ -2,20 +2,31 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import type { Entry } from "../types/index";
-import type { PostgrestResponse } from "@supabase/supabase-js";
 
 function History() {
   const [entries, setEntries] = useState<Entry[]>([]);
 
   useEffect(() => {
-    supabase
-      .from("entries")
-      .select("*")
-      .then((res: PostgrestResponse<Entry>) => {
-        if (res.error) console.error(res.error);
-        else if (res.data) setEntries(res.data as Entry[]);
-      });
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const { data, error } = await supabase
+        .from("entries")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+      if (error) console.error(error);
+      else if (data) setEntries(data as Entry[]);
+    });
   }, []);
+
+  const deleteEntry = async (id: string) => {
+    const { error } = await supabase.from("entries").delete().eq("id", id);
+    if (error) {
+      console.error("Delete error:", error);
+      return;
+    }
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+  };
 
   function getVibeTagBadge(vibe: string | undefined) {
     if (!vibe) return null;
@@ -71,8 +82,15 @@ function History() {
                   })}
                 </p>
               </div>
-              <div className="text-left sm:text-right shrink-0">
+              <div className="flex items-center gap-3 shrink-0">
                 <span className="text-lg font-extrabold text-white">${entry.amount.toFixed(2)}</span>
+                <button
+                  onClick={() => deleteEntry(entry.id)}
+                  className="p-1.5 rounded-lg text-neutral-600 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
+                  title="Delete entry"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
           ))}

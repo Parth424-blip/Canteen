@@ -8,25 +8,45 @@ function LogEntry() {
   const [note, setNote] = useState<string>("");
   const [label, setLabel] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
+  const [errorMsg, setErrorMsg] = useState<string>("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) {
-        const { error } = await supabase
-          .from("entries")
-          .insert({ amount, label, vibe_tag: vibeTag, note, user_id: user.id })
-          .select();
-        if (error) console.error(error);
-        else alert("Entry logged");
-        setAmount(0);
-        setLabel("");
-        setVibeTag("");
-        setNote("");
-        navigate("/log");
-      }
-    });
+    setErrorMsg("");
+    setLoading(true);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setErrorMsg("You are not logged in. Please sign in first.");
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from("entries")
+      .insert({
+        amount,
+        label,
+        vibe_tag: vibeTag || null,
+        note: note || null,
+        user_id: session.user.id,
+      });
+
+    setLoading(false);
+
+    if (error) {
+      console.error("Insert error:", error);
+      setErrorMsg(`Failed to save entry: ${error.message}`);
+      return;
+    }
+
+    setAmount(0);
+    setLabel("");
+    setVibeTag("");
+    setNote("");
+    navigate("/");
   };
 
   return (
@@ -36,7 +56,9 @@ function LogEntry() {
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
             <span>📝</span> Log Entry
           </h1>
-          <p className="text-sm text-neutral-400 mt-1">Record your spending details below</p>
+          <p className="text-sm text-neutral-400 mt-1">
+            Record your spending details below
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -79,10 +101,34 @@ function LogEntry() {
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {[
-                  { tag: "Necessary", active: "bg-blue-500/10 border-blue-500/50 text-blue-400 shadow-blue-500/5", inactive: "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-blue-400 hover:bg-blue-500/5" },
-                  { tag: "Impulse", active: "bg-rose-500/10 border-rose-500/50 text-rose-400 shadow-rose-500/5", inactive: "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-rose-400 hover:bg-rose-500/5" },
-                  { tag: "Investment", active: "bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-emerald-500/5", inactive: "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-emerald-400 hover:bg-emerald-500/5" },
-                  { tag: "Experience", active: "bg-purple-500/10 border-purple-500/50 text-purple-400 shadow-purple-500/5", inactive: "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-purple-400 hover:bg-purple-500/5" },
+                  {
+                    tag: "Necessary",
+                    active:
+                      "bg-blue-500/10 border-blue-500/50 text-blue-400 shadow-blue-500/5",
+                    inactive:
+                      "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-blue-400 hover:bg-blue-500/5",
+                  },
+                  {
+                    tag: "Impulse",
+                    active:
+                      "bg-rose-500/10 border-rose-500/50 text-rose-400 shadow-rose-500/5",
+                    inactive:
+                      "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-rose-400 hover:bg-rose-500/5",
+                  },
+                  {
+                    tag: "Investment",
+                    active:
+                      "bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-emerald-500/5",
+                    inactive:
+                      "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-emerald-400 hover:bg-emerald-500/5",
+                  },
+                  {
+                    tag: "Experience",
+                    active:
+                      "bg-purple-500/10 border-purple-500/50 text-purple-400 shadow-purple-500/5",
+                    inactive:
+                      "bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:text-purple-400 hover:bg-purple-500/5",
+                  },
                 ].map((item) => {
                   const isSelected = vibeTag === item.tag;
                   return (
@@ -116,11 +162,25 @@ function LogEntry() {
             </div>
           </div>
 
+          {/* Error Message */}
+          {errorMsg && (
+            <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
+              <span>⚠️</span>
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl font-semibold text-black bg-amber-500 hover:bg-amber-400 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/25 transition-all duration-200 cursor-pointer text-center text-sm"
+            disabled={loading}
+            className="w-full py-3.5 rounded-xl font-semibold text-black bg-amber-500 hover:bg-amber-400 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/25 transition-all duration-200 cursor-pointer text-center text-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Submit Entry
+            {loading ? (
+              <>
+                <span className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin inline-block" />
+                Saving...
+              </>
+            ) : "Submit Entry"}
           </button>
         </form>
       </div>

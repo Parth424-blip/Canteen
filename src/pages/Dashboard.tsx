@@ -3,21 +3,32 @@ import { useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import type { Entry } from "../types/index";
 import { useNavigate } from "react-router-dom";
-import type { PostgrestResponse } from "@supabase/supabase-js";
 
 function Dashboard() {
   const navigate = useNavigate();
   const [entries, setEntries] = useState<Entry[]>([]);
 
   useEffect(() => {
-    supabase
-      .from("entries")
-      .select("*")
-      .then((res: PostgrestResponse<Entry>) => {
-        if (res.error) console.error(res.error);
-        else if (res.data) setEntries(res.data as Entry[]);
-      });
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const { data, error } = await supabase
+        .from("entries")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+      if (error) console.error(error);
+      else if (data) setEntries(data as Entry[]);
+    });
   }, []);
+
+  const deleteEntry = async (id: string) => {
+    const { error } = await supabase.from("entries").delete().eq("id", id);
+    if (error) {
+      console.error("Delete error:", error);
+      return;
+    }
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+  };
 
   function getPersonality(tag: string) {
     if (tag === "Impulse") return "You're an Impulse Spender 🔥";
@@ -45,7 +56,7 @@ function Dashboard() {
     return acc;
   }, 0);
 
-  const recentEntries = entries.slice(-5);
+  const recentEntries = entries.slice(0, 5);
   const vibeTagCounter = entries.reduce((acc, entry) => {
     if (entry.vibe_tag) {
       acc[entry.vibe_tag] = (acc[entry.vibe_tag] || 0) + 1;
@@ -150,8 +161,15 @@ function Dashboard() {
                     })}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="flex items-center gap-3">
                   <span className="text-base font-extrabold text-white">${entry.amount.toFixed(2)}</span>
+                  <button
+                    onClick={() => deleteEntry(entry.id)}
+                    className="p-1.5 rounded-lg text-neutral-600 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
+                    title="Delete entry"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
             ))}

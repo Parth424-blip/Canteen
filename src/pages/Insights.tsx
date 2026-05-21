@@ -2,19 +2,21 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import type { Entry } from "../types/index";
-import type { PostgrestResponse } from "@supabase/supabase-js";
 
 function Insights() {
   const [entries, setEntries] = useState<Entry[]>([]);
 
   useEffect(() => {
-    supabase
-      .from("entries")
-      .select("*")
-      .then((res: PostgrestResponse<Entry>) => {
-        if (res.error) console.error(res.error);
-        else if (res.data) setEntries(res.data as Entry[]);
-      });
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const { data, error } = await supabase
+        .from("entries")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+      if (error) console.error(error);
+      else if (data) setEntries(data as Entry[]);
+    });
   }, []);
 
   const totalAmount = entries.reduce((acc, entry) => acc + entry.amount, 0);
