@@ -1,64 +1,148 @@
-# 🪙 Canteen — Personal Spending Tracker
+<div align="center">
 
-A sleek, modern web app to track your daily canteen and personal spending with vibe-based categorization and spending insights. Built with React, TypeScript, and Supabase.
+# 🪙 Canteen
 
-![Canteen Dashboard](public/screenshot-dashboard.png)
+### Full-Stack Expense Tracking Platform
 
-## ✨ Features
+Track daily spending, analyze habits, and manage personal finances with secure authentication, real-time insights, and user-isolated data storage.
 
-- **🔐 Authentication** — Secure sign-up and sign-in with email & password via Supabase Auth
-- **📝 Log Entries** — Record spending with amount, label, vibe category, and optional notes
-- **📊 Dashboard** — Real-time overview with today's spend, weekly spend, recent entries, and spending personality
-- **📜 History** — Complete scrollable log of all your past entries
-- **💡 Insights** — Deep analytics including total spending, most frequent vibe category, and highest spending category
-- **🗑️ Delete Entries** — Remove entries from Dashboard or History with one click
-- **🎨 Vibe Tags** — Categorize every expense as **Necessary**, **Impulse**, **Investment**, or **Experience**
-- **🧠 Spending Personality** — Discover your spending personality based on your most frequent vibe tag
-- **🔒 Row-Level Security** — Each user can only access their own data
+<p align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-181818?style=for-the-badge&logo=supabase&logoColor=3ECF8E" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-0F172A?style=for-the-badge&logo=tailwind-css&logoColor=38BDF8" />
+</p>
 
-## 🛠️ Tech Stack
+</div>
+
+---
+
+# Overview
+
+Canteen is a modern full-stack expense tracking application designed to help users monitor daily spending patterns through analytics, categorized entries, and real-time dashboards.
+
+The application focuses on:
+- Secure authentication
+- User-isolated data access
+- Real-time financial insights
+- Clean and scalable architecture
+- Modern responsive UI
+
+---
+
+# Features
+
+## 🔐 Authentication
+- Secure sign-up and sign-in using Supabase Auth
+- Protected routes and authenticated sessions
+- Persistent login state
+
+## 💸 Expense Tracking
+- Log expenses with amount, labels, notes, and categories
+- Track daily and weekly spending
+- Delete entries instantly
+
+## 📊 Analytics Dashboard
+- Real-time spending overview
+- Recent transaction history
+- Highest spending category
+- Most frequent spending behavior
+- Personalized spending insights
+
+## 🧠 Smart Categorization
+Classify expenses into:
+- Necessary
+- Impulse
+- Investment
+- Experience
+
+## 🔒 Security
+- PostgreSQL database with Supabase
+- Row-Level Security (RLS)
+- User-specific data isolation
+- Protected database operations
+
+---
+
+# Tech Stack
 
 | Technology | Purpose |
 |---|---|
-| **React 19** | UI framework |
-| **TypeScript** | Type safety |
-| **Vite** | Build tool & dev server |
-| **Supabase** | Auth, PostgreSQL database, Row-Level Security |
-| **React Router v7** | Client-side routing |
-| **Tailwind CSS v4** | Utility-first styling |
+| React 19 | Frontend framework |
+| TypeScript | Type safety |
+| Vite | Build tool |
+| Supabase | Authentication + Backend |
+| PostgreSQL | Database |
+| React Router v7 | Routing |
+| Tailwind CSS v4 | Styling |
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
+# Application Pages
 
-- [Node.js](https://nodejs.org/) (v18+)
-- A [Supabase](https://supabase.com/) account and project
+| Route | Description |
+|---|---|
+| `/auth` | User authentication |
+| `/` | Dashboard with analytics and recent activity |
+| `/log` | Add a new expense entry |
+| `/history` | View all previous transactions |
+| `/insights` | Spending analytics and behavioral insights |
 
-### 1. Clone the repository
+---
+
+# Architecture Highlights
+
+- Component-based frontend architecture
+- Protected route handling
+- Centralized Supabase client setup
+- Type-safe interfaces using TypeScript
+- Real-time database integration
+- Secure backend policies with Row-Level Security
+
+---
+
+# Getting Started
+
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/Parth424-blip/Canteen.git
+
 cd Canteen
 ```
 
-### 2. Install dependencies
+---
+
+## 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Set up Supabase
+---
+
+## 3. Configure Environment Variables
 
 Create a `.env` file in the project root:
 
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
+
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 4. Create the database table
+---
 
-Run this SQL in your Supabase SQL Editor:
+## 4. Run the Development Server
+
+```bash
+npm run dev
+```
+
+---
+
+# Database Schema
 
 ```sql
 CREATE TABLE entries (
@@ -70,64 +154,68 @@ CREATE TABLE entries (
   note TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
-
--- Enable Row Level Security
-ALTER TABLE entries ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Users can insert their own entries"
-  ON entries FOR INSERT TO authenticated
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can view their own entries"
-  ON entries FOR SELECT TO authenticated
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own entries"
-  ON entries FOR DELETE TO authenticated
-  USING (auth.uid() = user_id);
 ```
-
-### 5. Run the dev server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-## 📁 Project Structure
-
-```
-src/
-├── lib/
-│   └── supabase.ts        # Supabase client initialization
-├── types/
-│   └── index.ts            # TypeScript interfaces
-├── pages/
-│   ├── Auth.tsx             # Sign up / Sign in page
-│   ├── Dashboard.tsx        # Main dashboard with stats
-│   ├── LogEntry.tsx         # Form to log new entries
-│   ├── History.tsx          # Full spending history
-│   └── Insights.tsx         # Spending analytics
-├── App.tsx                  # Routes, layout, and auth guard
-└── main.tsx                 # App entry point
-```
-
-## 🎯 Pages Overview
-
-| Page | Description |
-|---|---|
-| `/auth` | Sign up or sign in with email & password |
-| `/` | Dashboard — today's spend, weekly spend, recent entries, personality badge |
-| `/log` | Log a new entry with amount, label, vibe tag, and notes |
-| `/history` | Browse and delete all past entries |
-| `/insights` | View total spending, most frequent vibe, and top spending category |
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
 
 ---
 
-Built with ☕ and curiosity by [Parth](https://github.com/Parth424-blip)
+# Row-Level Security Policies
+
+```sql
+ALTER TABLE entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert their own entries"
+ON entries FOR INSERT TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view their own entries"
+ON entries FOR SELECT TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own entries"
+ON entries FOR DELETE TO authenticated
+USING (auth.uid() = user_id);
+```
+
+---
+
+# Folder Structure
+
+```txt
+src/
+├── lib/
+│   └── supabase.ts
+
+├── pages/
+│   ├── Auth.tsx
+│   ├── Dashboard.tsx
+│   ├── LogEntry.tsx
+│   ├── History.tsx
+│   └── Insights.tsx
+
+├── types/
+│   └── index.ts
+
+├── App.tsx
+└── main.tsx
+```
+
+---
+
+# Future Improvements
+
+- Charts and visual analytics
+- Budget limits and alerts
+- Export transaction history
+- Monthly spending reports
+- PWA support
+- Dark/light theme toggle
+
+---
+
+# Author
+
+**Parth Tiwari**
+
+- GitHub: https://github.com/Parth424-blip
+- Portfolio: https://parths-portfolio1.netlify.app/
+- Email: tiwariparth339@gmail.com
